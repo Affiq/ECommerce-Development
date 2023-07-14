@@ -29,7 +29,104 @@
 <h2> Data Laws </h2>
 
 <h2> OAuth2 and Connection Establishment </h2>
+<p> There are a number of flows to use to establish connection with the Xero API, but we will opt for the Code Flow. Users are authorized to access protected resources on Xero using an authorization process called OAuth2 – protected resources cannot be accessed without a valid access token. If an access token is valid but expired, it can be refreshed using a separate token called a refresh token. For a user to obtain a token, they must first obtain a code from the Xero API. The code can then be exchanged once more with the API to obtain an access token and a refresh token.  </p>
 
+<p> Our system will store the Code, Access Token and Refresh Token values inside the system itself rather than the cookies provided in the Xero-API example, hence this will abstract the information away from this user. This is because the users of our system, franchisees, should not have authorization to CRUD to the Xero database directly and creates potential for misuse. By storing the information locally, the website acts as a user to the database and hence a handler or a proxy to interact with the Xero API. This is somewhat achievable with a single connection as we have a limited numbe of users (we can estimate that there should be no more than three users using our ecommerce website at a given instance). </p>
+
+<h3> Useful Resources</h3>
+<ul>
+  <li> <a href="https://developer.xero.com/documentation/guides/oauth2/overview/"> Determining the Right Flow to Use </a> </li>
+  <li> <a href="https://developer.xero.com/documentation/guides/oauth2/auth-flow"> How to work with the Code Flow </a> </li>
+</ul>
+
+<h2> Working with the Code Flow </h2>
+<p> To enable authorisation, we must first acquire 3 important pieces of detail:  The Client ID, the Client Secret and the Callback URL. The client and the secret (which can be generated) can be obtained through the Xero Developer website whilst the callback URL can be configured. In this instance we will configure the callback URL as "http://localhost:8080/Callback". Now we can summarise the authorisation with the following steps:</p>
+<ol>
+  <li> Build our Authorization link </li>
+  <li> Redirect the Administrator to the Xero Website (through the REST controller)</li>
+  <li> Check our Secret State </li>
+  <li> Exchange the Code for Access Tokens and store them </li>
+  <li> Use the API </li>
+</ol>
+
+<h4> Building the Authorization link</h4>
+<p> The client ID, secret and callback URL should be stored securely somewhere in our application, and retrieved by a module. To build our URL, we would need to construct a JacksonFactory, a MemoryDataStoreFactory and a NetHttpTransport object to work with the AuthorizationCodeFlow builder we will use. We will also autogenerate a radom int for our secret. </p>
+
+```
+// Import necessary libraries
+import com.fasterxml.jackson.core.JsonFactory;
+import com.google.api.client.auth.oauth2.AuthorizationCodeFlow;
+import com.google.api.client.auth.oauth2.AuthorizationCodeTokenRequest;
+import com.google.api.client.auth.oauth2.BearerToken;
+import com.google.api.client.auth.oauth2.ClientParametersAuthentication;
+import com.google.api.client.auth.oauth2.TokenResponse;
+import com.google.api.client.http.GenericUrl;
+import com.google.api.client.http.javanet.NetHttpTransport;
+import com.google.api.client.json.jackson2.JacksonFactory;
+import com.google.api.client.util.store.DataStoreFactory;
+import com.google.api.client.util.store.MemoryDataStoreFactory;
+
+...
+      // Static Links from Xero...
+    private String TOKEN_SERVER_URL = "https://identity.xero.com/connect/token";
+    private String AUTHORIZATION_SERVER_URL = "url= https://login.xero.com/identity/connect/authorize";
+
+    // Obtaining some values through injection - if experimenting, just assign them here directly as plaintext.
+    @Value("${xero.client-id}")
+    private String clientId;
+    @Value("${xero.client-secret}")
+    private String clientSecret;
+    @Value("${xero.callback-url}")
+    private String redirectURI;
+
+    // Some objects we will use...
+    final NetHttpTransport HTTP_TRANSPORT = new NetHttpTransport();
+    final JacksonFactory JSON_FACTORY = new JacksonFactory();
+    DataStoreFactory DATA_STORE_FACTORY = new MemoryDataStoreFactory();
+
+    // Used to check the callback and prevent forgery...
+    String secretState = "secret" + new Random().nextInt(999_999);    
+...
+```
+
+<p> We will then need to create an arraylist of scopes that we want our program to access. These should be minimised as this grants potential for misuse in our system.</p>
+
+```
+	    // Creating our list of scopes (essentially permissions) of what our microservice should handle...
+        ArrayList<String> scopeList = new ArrayList<String>();
+        scopeList.add("openid");
+        scopeList.add("email");
+        scopeList.add("profile");
+        scopeList.add("offline_access");
+        scopeList.add("accounting.settings");
+        scopeList.add("accounting.transactions");
+        scopeList.add("accounting.contacts");
+        scopeList.add("accounting.journals.read");
+        scopeList.add("accounting.reports.read");
+        scopeList.add("accounting.attachments");
+```
+
+<p>
+  The next step is to build our AuthorizationCodeFlow and build the URL from the flow, before redirecting the user to the Xero webpage.
+</p>
+
+```
+// Building an authorisation flow... (Adding clientID and Secret and Scopes)
+        // For AUTHORIZATION
+        DataStoreFactory DATA_STORE_FACTORY = new MemoryDataStoreFactory();
+        AuthorizationCodeFlow flow = new AuthorizationCodeFlow.Builder(BearerToken.authorizationHeaderAccessMethod(),
+                HTTP_TRANSPORT, JSON_FACTORY, new GenericUrl(TOKEN_SERVER_URL),
+                new ClientParametersAuthentication(clientId, clientSecret), clientId, AUTHORIZATION_SERVER_URL)
+                .setScopes(scopeList).setDataStoreFactory(DATA_STORE_FACTORY).build();
+        
+        // Setting the URL with ClientID, Scopes, SecretState and Redirect URI
+        String url = flow.newAuthorizationUrl().setClientId(clientId).setScopes(scopeList).setState(secretState)
+                .setRedirectUri(redirectURI).build();
+        
+	    return url; // Main controller should redirect the user to this URL value
+```
+
+     
 <h2> Database Synchronisation </h2>
 <p> The Xero ERP system contains a lightweight stock system which may be insufficient - we may need to store more details about a product such as a product image, product weight, etc, which Xero does not allow. As mentioned before, shelling out money to extend the Xero database may be extremely costly, and so we will opt to extend the system by creating a MySQL database for products, where the ID for the Xero product will correspond to a new ID for our MySQL product table. However, this also introduces the problem of database synchronisation. </p>
 
