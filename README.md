@@ -3,8 +3,15 @@
 
 <p> The project in detail was accomplished using Spring Boot for the backend server, MySQL for backend storage, JPA for Object-Relational Mapping, ReactJS for frontend along with some Xero API intergration. The final solution is a full stack web-service that consists of a frontend server and several back-end microservices that also incorporates a chatbot – effectively the ecommerce website described earlier. The backend microservices will also communicate with a cloud database and the company’s ERP (Enterprise Resource Planning) software web-API to create, read, update, and delete data to the corresponding databases. The system will then create an invoice and bill the user through the Xero API and send an invoice through their email. The payment gateway will also be implemented through Xero's configuration system. </p>
   
-<p> Due to confidentiality and security issues, large portions of code cannot be uploaded here, but this repository will give as detailed review as possible on the process and possible obstacles that come when implementing an ecommerce website. The code also utilsies the XeroAPI repository, which is available <a href="https://github.com/XeroAPI/Xero-Java/"> here </a>, but will also be included in the file system.</p>
+<p> Due to confidentiality and security issues, large portions of code cannot be uploaded here, but this repository will give as detailed review as possible on the process and possible obstacles that come when implementing an ecommerce website. The code also utilsies the XeroAPI repository, which is available <a href="https://github.com/XeroAPI/Xero-Java/"> here </a>, but will also be included in the file system. The Xero API can also be intergrated via Maven by adding the following dependency in the pom.xml file:</p>
 
+```
+<dependency>
+  <groupId>com.github.xeroapi</groupId>
+  <artifactId>xero-java</artifactId>
+  <version>4.X.X</version>
+</dependency>
+```
 
 
 <h2> System Analysis </h2>
