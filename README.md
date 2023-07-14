@@ -8,6 +8,9 @@
 
 
 <h2> System Analysis </h2>
+<p> Before even jumping into a project, one must analyse the current system to identify key areas of weaknesses. As the main interest was business process efficiency through automation, one of the most ideal business analysis techniques was Workflow Analysis. Workflow analysis essentially identifies the tasks for a certain person or employee in a given business process, and how these tasks are passed onto the next role. This allows us to identify redudndant tasks, inefficient workspace layouts and potential bottlenecks in the workflow. What we can find in some circumstances is that regular administrative employees can be swamped in a number of processes - some of which can be solved through automating part of their tasks. Likewise, there may be inefficiency in how these are passed onto the next role - such as a manual telephone call to a supplier which can be replaced with an automatic invoice to a supplier. </p>
+
+<p> Another critical analysis technique used was Data Flow Analysis to model where information - at its most atomic form - derives from to form larger systems of information. Employees that are a master of their work tend to have critical information imprinted in their head (such as a car dealer memorising the costs of all their cars) which often tends to lead to a lack of datasource compatible with our system, and it is useful to know what data we may need to model, and what databases we may need to create as part of a new system. </p>
 
 <h2> Current Solutions </h2>
 <p> A plethora of solutions already exist for an ecommerce solutions. Big businesses that care for the run-of-the-mill processes should opt for Sage, as they have a trial and tested Stock Management system, Accounting system, Logistics and Book-Keeping system - however ecommerce is not part of this and an independent software developer vendor may need to be hired on top of this. To develop software compatible with Sage software, one would need to apply for an independent Software Developer Vendor License with Sage (at a price of ~£2,000) to access the Sage Software Development Kit. </p>
@@ -21,6 +24,10 @@
 <h2> OAuth2 and Connection Establishment </h2>
 
 <h2> Database Synchronisation </h2>
+<p> The Xero ERP system contains a lightweight stock system which may be insufficient - we may need to store more details about a product such as a product image, product weight, etc, which Xero does not allow. As mentioned before, shelling out money to extend the Xero database may be extremely costly, and so we will opt to extend the system by creating a MySQL database for products, where the ID for the Xero product will correspond to a new ID for our MySQL product table. However, this also introduces the problem of database synchronisation. </p>
+
+<p> Synchronisation can be unidrectional or two-directional. Here, unidirectional synchronisation was implemented as it was not critical to keep track of products that were no longer in the ERP system - the website will simply not display them to the user. A module was created - called UpdateProducts.Java - that would retrieve the Xero products from the database and would compare them to our MySQL products table. The program will then identify which were not in the MySQL system, and then created records with null values accordingly. This would then prompt an administrator to enter some details about the new product. Hence, whenver a product was added or removed from the Xero database, the program would then adjust the MySQL database accordingly. </p>
+
 
 <h2> Microservices - Not a Silver Bullet </h2>
 
