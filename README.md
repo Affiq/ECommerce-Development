@@ -129,6 +129,8 @@ import com.google.api.client.util.store.MemoryDataStoreFactory;
 <h4> Manual Authorization </h4>
 <p> Once the user has been redirected, they will then be prompted for manual authorization which should look like the diagram below. Once the user has clicked the authorisation button, they will be redirected to the RedirectURL / CallbackURL, in which two parameters will be supplied - the code used to exchange access tokens and the secret state. The secret state is used to check validity and prevent forgery/interception of the code exchange. We will check the given secret state to the secret state we have supplied to the Xero website - if they do not match then we will abort the procedure and begin reauthorization from the beginning.</p>
 
+![](https://github.com/Affiq/ECommerce-Development/blob/main/Images/XeroAuth.png)
+
 <h4> Exchange the Code for Access Tokens </h4>
 <p> Once we have our Code and have stored it somewhere in our server, we will then need to exchange these codes for access tokens. Due to very easy constraints and a low number of users, we only need to establish one connection at a time with Xero, but they have the ability to support up to 25 depending on the chosen flow. Hence it may be wise to design a system around this limited number of connections such as building it in the style of the Resource Pool Pattern. We will create a new function that deals with this code exchange. We will first need to redefine our scope list, create an initial MemoryDataStoreFactory object and build the AuthorizationFlow again - the scopes may vary if your system works with different types of tenants and users and so there must be some module in your program that can identify this and attach the necessary scopes.</p>
 
