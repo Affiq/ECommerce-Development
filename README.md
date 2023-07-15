@@ -44,7 +44,7 @@
 <ol>
   <li> Build our Authorization link </li>
   <li> Redirect the Administrator to the Xero Website (through the REST controller)</li>
-  <li> Check our Secret State </li>
+  <li> Obtain our Code and Check our Secret State </li>
   <li> Exchange the Code for Access Tokens and store them </li>
   <li> Use the API </li>
 </ol>
@@ -126,6 +126,59 @@ import com.google.api.client.util.store.MemoryDataStoreFactory;
 	    return url; // Main controller should redirect the user to this URL value
 ```
 
+<h4> Manual Authorization </h4>
+<p> Once the user has been redirected, they will then be prompted for manual authorization which should look like the diagram below. Once the user has clicked the authorisation button, they will be redirected to the RedirectURL / CallbackURL, in which two parameters will be supplied - the code used to exchange access tokens and the secret state. The secret state is used to check validity and prevent forgery/interception of the code exchange. We will check the given secret state to the secret state we have supplied to the Xero website - if they do not match then we will abort the procedure and begin reauthorization from the beginning.</p>
+
+<h4> Exchange the Code for Access Tokens </h4>
+<p> Once we have our Code and have stored it somewhere in our server, we will then need to exchange these codes for access tokens. Due to very easy constraints and a low number of users, we only need to establish one connection at a time with Xero, but they have the ability to support up to 25 depending on the chosen flow. Hence it may be wise to design a system around this limited number of connections such as building it in the style of the Resource Pool Pattern. We will create a new function that deals with this code exchange. We will first need to redefine our scope list, create an initial MemoryDataStoreFactory object and build the AuthorizationFlow again - the scopes may vary if your system works with different types of tenants and users and so there must be some module in your program that can identify this and attach the necessary scopes.</p>
+
+```
+    private void exchangeCodeForTokens(String code) throws IOException {
+    	
+    	System.out.println("Obtained code: "+code);
+    	
+    	// Define our scope list...
+    	ArrayList<String> scopeList = new ArrayList<String>();
+        scopeList.add("openid");
+        scopeList.add("email");
+        scopeList.add("profile");
+        scopeList.add("offline_access");
+        scopeList.add("accounting.settings");
+        scopeList.add("accounting.transactions");
+        scopeList.add("accounting.contacts");
+        scopeList.add("accounting.journals.read");
+        scopeList.add("accounting.reports.read");
+        scopeList.add("accounting.attachments");
+        
+    	
+        DataStoreFactory DATA_STORE_FACTORY = new MemoryDataStoreFactory();
+...
+```
+
+<p> Once we have built the flow, our previous step was to create an authorisation URL - here we instead create a new token request using the following code: </p>
+
+```
+        // Getting a new token...
+        AuthorizationCodeTokenRequest tokenReq= flow.newTokenRequest(code).setRedirectUri(redirectURI);
+        TokenResponse tokenResponse = tokenReq.execute();
+```
+
+<p> Again, the user will be redirected to the RedirectURI / Callback URL. However, the code and secret state was originally passed within the URL as a query string parameter whereas token details are represented using JSON. They typically have the same format and hence some libraries are able to represent this information - namely we can represent this JSON information as a TokenResponse object as seen above. The TokenResponse object comes with methods that allow you to obtain information about the access token. For this example specifically, we can store it in some general variables, declared at the start of the program, but a secure service should be responsible for storing these somewhere. In a proxy situation where we act as a middleman we can store it on the server but for client applications, these could ideally be stored in cookies.  </p>
+
+```
+// Example of storing in general variables defined at the start of the program
+	AccessToken = tokenResponse.getAccessToken();
+	RefreshToken = tokenResponse.getRefreshToken();
+	Expiry = tokenResponse.getExpiresInSeconds();
+
+// Example of a custom service that stores the token information.
+        tokenService.saveTokenDetails(tokenResponse.get("id_token").toString(), 
+        		tokenResponse.getAccessToken(), 
+        		tokenResponse.getRefreshToken(), 
+        		tokenResponse.getExpiresInSeconds());
+```
+
+<p> The system should then be ready to interact with the Xero API.</p>
      
 <h2> Database Synchronisation </h2>
 <p> The Xero ERP system contains a lightweight stock system which may be insufficient - we may need to store more details about a product such as a product image, product weight, etc, which Xero does not allow. As mentioned before, shelling out money to extend the Xero database may be extremely costly, and so we will opt to extend the system by creating a MySQL database for products, where the ID for the Xero product will correspond to a new ID for our MySQL product table. However, this also introduces the problem of database synchronisation. </p>
@@ -135,6 +188,5 @@ import com.google.api.client.util.store.MemoryDataStoreFactory;
 
 <h2> Microservices - Not a Silver Bullet </h2>
 
-<h2> Microservices - It Happened Anyway </h2>
 
 
