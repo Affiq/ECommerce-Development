@@ -26,8 +26,6 @@
 
 <p> However, those that want high customisability should opt for the Xero ERP system - particularly if the company owns a programming powerhouse (or a bored individual). Be warned however, that trying to offload some functionality by purchasing plugins from the market place can be extremely costly - advanced stock systems may incur an extra £500 monthly - and should only be considered if the company can program their way out of most problems.</p>
 
-<h2> Data Laws </h2>
-
 <h2> OAuth2 and Connection Establishment </h2>
 <p> There are a number of flows to use to establish connection with the Xero API, but we will opt for the Code Flow. Users are authorized to access protected resources on Xero using an authorization process called OAuth2 – protected resources cannot be accessed without a valid access token. If an access token is valid but expired, it can be refreshed using a separate token called a refresh token. For a user to obtain a token, they must first obtain a code from the Xero API. The code can then be exchanged once more with the API to obtain an access token and a refresh token.  </p>
 
@@ -187,8 +185,6 @@ import com.google.api.client.util.store.MemoryDataStoreFactory;
 
 <p> Synchronisation can be unidrectional or two-directional. Here, unidirectional synchronisation was implemented as it was not critical to keep track of products that were no longer in the ERP system - the website will simply not display them to the user. A module was created - called UpdateProducts.Java - that would retrieve the Xero products from the database and would compare them to our MySQL products table. The program will then identify which were not in the MySQL system, and then created records with null values accordingly. This would then prompt an administrator to enter some details about the new product. Hence, whenver a product was added or removed from the Xero database, the program would then adjust the MySQL database accordingly. </p>
 
-
-<h2> Microservices - Not a Silver Bullet </h2>
 
 
 
